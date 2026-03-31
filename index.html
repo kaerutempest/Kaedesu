@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="referrer" content="no-referrer">
-    <title>KaeDesu v20.7 | Sultan Navigation Pro</title>
+    <title>KaeDesu | Anime Streaming...</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -213,8 +213,8 @@
             <div class="server-grid" id="serverGrid"></div>
             <div class="m-divider"><span class="m-divider-text">RESOLUSI</span><div class="m-divider-line"></div></div>
             <div class="server-grid">
-                <div class="btn-server active">HD 720P</div>
-                <div class="btn-server">SD 480P</div>
+                <div class="btn-server res-btn active" onclick="changeResolution('720', this)">HD 720P</div>
+                <div class="btn-server res-btn" onclick="changeResolution('480', this)">SD 480P</div>
             </div>
         </div>
     </div>
@@ -232,15 +232,17 @@
             { name: 'Harem', id: 'catHarem', query: '/anime?genres=35', color: '#f43f5e' }
         ];
 
+        // Global State Player
+        let currentStream = { slug: '', ep: 1, title: '' };
+
         function createSlug(title) {
-            return title.toLowerCase().split(':')[0].split('(')[0].split('-')[0]
-                .replace(/season \d+|2nd season|3rd season|part \d+/g, '')
+            return title.toLowerCase()
+                .split(':')[0].split('(')[0].split('-')[0]
+                .replace(/season \d+|2nd season|3rd season|part \d+|tv/g, '')
                 .replace(/[^\w\s]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-');
         }
 
-        // FUNGSI NAVIGASI CERDAS SULTAN
         function closeToHome() {
-            // Hapus semua history state agar balik ke Home awal
             while(window.history.state && window.history.state.v) {
                 window.history.back();
             }
@@ -249,18 +251,13 @@
 
         function renderViews() {
             const state = window.history.state ? window.history.state.v : null;
-            
-            // Sembunyikan semua dulu
             document.getElementById('playerView').style.display = 'none';
             document.getElementById('animeModal').style.display = 'none';
             document.getElementById('fullListView').style.display = 'none';
-            document.getElementById('videoContainer').innerHTML = '';
-
-            // Tampilkan berdasarkan Hirarki State
+            
             if (state === 'player') {
                 document.getElementById('playerView').style.display = 'flex';
-                document.getElementById('animeModal').style.display = 'block'; // Tetap ada di bawah player
-                // FullList ditampilkan kalau player dibuka dari FullList
+                document.getElementById('animeModal').style.display = 'block';
                 if(window.history.state.from === 'full') document.getElementById('fullListView').style.display = 'block';
             } 
             else if (state === 'detail') {
@@ -277,9 +274,14 @@
             document.getElementById('pTitle').innerText = `${title} - EP ${ep}`;
             const slug = createSlug(rawTitle);
             
+            currentStream = { slug, ep, title };
+
             document.getElementById('serverGrid').innerHTML = ['Server 1', 'Server 2', 'Server 3'].map((s, i) => `
                 <div class="btn-server ${i===0?'active':''}" onclick="changeServer('${slug}', ${ep}, this)">${s}</div>
             `).join('');
+
+            // Reset UI Resolusi ke HD
+            document.querySelectorAll('.res-btn').forEach((b, i) => i === 0 ? b.classList.add('active') : b.classList.remove('active'));
 
             changeServer(slug, ep);
             history.pushState({v:'player', from: isFromFull ? 'full' : 'home'}, '');
@@ -288,7 +290,7 @@
 
         function changeServer(slug, ep, el) {
             if(el) {
-                document.querySelectorAll('.btn-server').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('#serverGrid .btn-server').forEach(b => b.classList.remove('active'));
                 el.classList.add('active');
             }
             const serverIdx = el ? Array.from(el.parentNode.children).indexOf(el) : 0;
@@ -297,19 +299,29 @@
                 `https://p2p.otakudesu.cloud/embed/${slug}/${ep}`,
                 `https://api.kaedesu.workers.dev/embed/${slug}/${ep}`
             ];
-            document.getElementById('videoContainer').innerHTML = `
-                <iframe src="${providers[serverIdx] || providers[0]}" allowfullscreen="true" referrerpolicy="no-referrer"
+            
+            const container = document.getElementById('videoContainer');
+            container.innerHTML = '<div class="h-full flex items-center justify-center"><div class="loading-pulse"></div></div>';
+            
+            setTimeout(() => {
+                container.innerHTML = `<iframe src="${providers[serverIdx] || providers[0]}" allowfullscreen="true" referrerpolicy="no-referrer"
                 sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation" allow="autoplay; encrypted-media"></iframe>`;
+            }, 300);
+        }
+
+        function changeResolution(res, el) {
+            document.querySelectorAll('.res-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            const activeServer = document.querySelector('#serverGrid .btn-server.active');
+            changeServer(currentStream.slug, currentStream.ep, activeServer);
         }
 
         async function openAnimeModal(id) {
             const isFromFull = window.history.state && (window.history.state.v === 'full' || window.history.state.from === 'full');
-            const modal = document.getElementById('animeModal');
             const content = document.getElementById('modalContent');
             
             history.pushState({v:'detail', from: isFromFull ? 'full' : 'home'}, '');
             renderViews();
-            
             content.innerHTML = '<div class="h-screen flex items-center justify-center"><div class="loading-pulse"></div></div>';
 
             try {
