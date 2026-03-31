@@ -57,7 +57,6 @@
         .brand-text { font-weight: 800; letter-spacing: -1.5px; font-style: italic; font-size: 20px; text-transform: uppercase; }
         .neon-glow { color: var(--brand); text-shadow: 0 0 15px rgba(255, 62, 62, 0.8); }
 
-        /* MENU TOGGLE TETAP TIGA TITIK/GARIS */
         .menu-toggle { width: 30px; height: 20px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; z-index: 2500; position: relative; }
         .menu-toggle span { width: 100%; height: 2px; background: #fff; border-radius: 10px; transition: 0.3s; }
         .menu-toggle.active span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
@@ -74,7 +73,6 @@
         .menu-link { display: block; padding: 15px 0; font-size: 14px; font-weight: 900; text-transform: uppercase; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.05); letter-spacing: 2px; }
         .menu-link i { color: var(--brand); margin-right: 12px; width: 20px; }
 
-        /* FOOTER SIDEBAR YANG TADI ILANG - SUDAH KEMBALI */
         .menu-footer { padding: 30px; border-top: 1px solid rgba(255,255,255,0.05); }
         .footer-inc { font-size: 12px; font-weight: 800; color: #fff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
         .footer-tag { font-size: 9px; font-weight: 600; color: var(--brand); text-transform: uppercase; letter-spacing: 2px; opacity: 0.8; }
@@ -96,7 +94,7 @@
         .see-all { font-size: 10px; font-weight: 800; color: var(--brand); text-transform: uppercase; cursor: pointer; padding: 5px; }
 
         .row-container { display: flex; overflow-x: auto; gap: 14px; padding: 0 18px 45px 18px; scrollbar-width: none; min-height: 180px; -webkit-overflow-scrolling: touch; }
-        .anime-item { flex: 0 0 30%; transform: translateZ(0); cursor: pointer; }
+        .anime-item { flex: 0 0 32%; transform: translateZ(0); cursor: pointer; }
         .poster-wrapper { aspect-ratio: 2/3; border-radius: 16px; overflow: hidden; background: #111; border: 1px solid rgba(255,255,255,0.15); }
         .poster-wrapper img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.4s ease; }
         .poster-wrapper img.loaded { opacity: 1; }
@@ -125,27 +123,23 @@
         .player-header { position: fixed; top: 0; width: 100%; z-index: 5200; padding: 15px 20px; display: flex; align-items: center; background: rgba(0,0,0,0.9); border-bottom: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(20px); height: 60px; }
         .btn-back-player { width: 35px; height: 35px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         
-        #videoContainer { position: fixed; top: 60px; left: 0; width: 100%; aspect-ratio: 16/9; background: #111; z-index: 5100; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        
+        #videoContainer { position: fixed; top: 60px; left: 0; width: 100%; aspect-ratio: 16/9; background: #111; z-index: 5100; overflow: hidden; }
         .player-controls { position: relative; z-index: 5001; padding: 25px 20px; margin-top: calc(60px + 56.25vw); }
         
-        .server-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 30px; }
-        .btn-server { 
-            background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 15px; 
-            border-radius: 10px; text-align: center; font-size: 10px; font-weight: 800; 
-            text-transform: uppercase; color: #888; transition: 0.2s; cursor: pointer;
-        }
-        .btn-server.active { border-color: var(--brand); color: #fff; background: rgba(255, 62, 62, 0.05); box-shadow: 0 0 10px rgba(255,62,62,0.2); }
+        .grid-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 25px; }
+        .btn-select { background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; text-align: center; font-size: 10px; font-weight: 800; text-transform: uppercase; color: #888; cursor: pointer; }
+        .btn-select.active { border-color: var(--brand); color: #fff; background: rgba(255, 62, 62, 0.05); box-shadow: 0 0 10px rgba(255,62,62,0.1); }
 
         .ep-grid-player { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 30px; }
-        .btn-ep-player { background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 12px 0; border-radius: 8px; text-align: center; font-size: 11px; font-weight: 800; color: #888; transition: 0.2s; cursor: pointer; }
+        .btn-ep-player { background: #111; border: 1px solid rgba(255,255,255,0.1); padding: 12px 0; border-radius: 8px; text-align: center; font-size: 11px; font-weight: 800; color: #888; cursor: pointer; }
         .btn-ep-player.active { background: var(--brand); color: #fff; border-color: var(--brand); box-shadow: 0 0 10px rgba(255,62,62,0.4); }
 
         #fullListView { position: fixed; inset: 0; background: #000; z-index: 3000; display: none; overflow-y: auto; padding-top: 80px; -webkit-overflow-scrolling: touch; }
         .view-header { position: fixed; top: 0; width: 100%; height: 70px; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); display: flex; align-items: center; padding: 0 20px; z-index: 3100; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .btn-back { width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 15px; }
-        .view-title { font-size: 13px; font-weight: 900; text-transform: uppercase; color: var(--brand); letter-spacing: 1px; }
+        .view-title { font-size: 13px; font-weight: 900; text-transform: uppercase; color: var(--brand); }
         .grid-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 20px; }
+        .list-loader { grid-column: span 3; padding: 40px 0; text-align: center; }
     </style>
 </head>
 <body>
@@ -188,6 +182,7 @@
             <div class="view-title" id="fullTitle">KATEGORI</div>
         </div>
         <div class="grid-container" id="fullGrid"></div>
+        <div id="fullLoader" class="list-loader" style="display:none;"><div class="loading-pulse"></div></div>
     </div>
 
     <div id="animeModal">
@@ -203,9 +198,15 @@
         <div id="videoContainer"></div>
         <div class="player-controls">
             <div class="m-divider"><span class="m-divider-text">PILIH SERVER</span><div class="m-divider-line"></div></div>
-            <div class="server-grid" id="serverGrid"></div>
-            
-            <div class="m-divider mt-6" style="margin-top: 24px;"><span class="m-divider-text">PILIH EPISODE</span><div class="m-divider-line"></div></div>
+            <div class="grid-select" id="serverGrid"></div>
+
+            <div class="m-divider"><span class="m-divider-text">KUALITAS</span><div class="m-divider-line"></div></div>
+            <div class="grid-select" id="qualityGrid">
+                <div class="btn-select" onclick="changeQuality('480p', this)">480P</div>
+                <div class="btn-select active" onclick="changeQuality('720p', this)">720P</div>
+            </div>
+
+            <div class="m-divider" style="margin-top: 24px;"><span class="m-divider-text">PILIH EPISODE</span><div class="m-divider-line"></div></div>
             <div class="ep-grid-player" id="playerEpList"></div>
         </div>
     </div>
@@ -215,15 +216,20 @@
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
         const CATS = [
-            { name: 'New Update', id: 'catTrend', query: '/seasons/now', color: '#ff3e3e' },
+            { name: 'Update', id: 'catTrend', query: '/seasons/now', color: '#ff3e3e' },
             { name: 'Romance', id: 'catRomance', query: '/anime?genres=22', color: '#ec4899' },
             { name: 'Action', id: 'catAction', query: '/anime?genres=1', color: '#3b82f6' },
             { name: 'Isekai', id: 'catIsekai', query: '/anime?genres=62', color: '#10b981' },
-            { name: 'Fantasy', id: 'catFantasy', query: '/anime?genres=10', color: '#eab308' },
+            { name: 'Fantasy', id: 'catFantasy', query: '/anime?genres=10', color: '#f59e0b' },
+            { name: 'School', id: 'catSchool', query: '/anime?genres=23', color: '#8b5cf6' },
+            { name: 'Comedy', id: 'catComedy', query: '/anime?genres=4', color: '#06b6d4' },
             { name: 'Harem', id: 'catHarem', query: '/anime?genres=35', color: '#f43f5e' }
         ];
 
-        let currentStream = { malId: 0, ep: 1, title: '', totalEps: 12 };
+        let currentStream = { malId: 0, ep: 1, title: '', totalEps: 1, quality: '720p', server: 0 };
+        
+        // Paginasi State untuk Full View
+        let fullViewState = { path: '', page: 1, hasNext: true, loading: false };
 
         function closeToHome() {
             while(window.history.state && window.history.state.v) { window.history.back(); }
@@ -236,76 +242,11 @@
 
         function renderViews() {
             const state = window.history.state ? window.history.state.v : null;
-            document.getElementById('playerView').style.display = 'none';
-            document.getElementById('animeModal').style.display = 'none';
-            document.getElementById('fullListView').style.display = 'none';
-            
-            if (state === 'player') {
-                document.getElementById('playerView').style.display = 'flex';
-                document.getElementById('animeModal').style.display = 'block';
-                toggleBodyLock(true);
-            } else if (state === 'detail') {
-                document.getElementById('animeModal').style.display = 'block';
-                toggleBodyLock(true);
-            } else if (state === 'full') {
-                document.getElementById('fullListView').style.display = 'block';
-                toggleBodyLock(true);
-            } else {
-                toggleBodyLock(false);
-                document.getElementById('videoContainer').innerHTML = ''; 
-            }
-        }
-
-        async function startStreaming(malId, ep, rawTitle, totalEps) {
-            const isFromFull = window.history.state && (window.history.state.v === 'full' || window.history.state.from === 'full');
-            document.getElementById('pTitle').innerText = `${rawTitle} - EP ${ep}`;
-            
-            currentStream = { malId, ep, title: rawTitle, totalEps: totalEps || 1 };
-
-            document.getElementById('serverGrid').innerHTML = `
-                <div class="btn-server active" onclick="changeServer(0, this)">SERVER HD</div>
-                <div class="btn-server" onclick="changeServer(1, this)">SERVER VIP</div>
-            `;
-
-            const epContainer = document.getElementById('playerEpList');
-            let epsHtml = '';
-            for(let i = 1; i <= currentStream.totalEps; i++) {
-                const safeTitle = rawTitle.replace(/'/g, "\\'");
-                epsHtml += `<div class="btn-ep-player ${i===ep?'active':''}" onclick="startStreaming(${malId}, ${i}, '${safeTitle}', ${currentStream.totalEps})">${i}</div>`;
-            }
-            epContainer.innerHTML = epsHtml;
-
-            if(window.history.state?.v !== 'player') history.pushState({v:'player', from: isFromFull ? 'full' : 'home'}, '');
-            renderViews();
-            
-            changeServer(0);
-            document.getElementById('playerView').scrollTo(0,0);
-        }
-
-        function changeServer(idx, el) {
-            if(el) {
-                document.querySelectorAll('#serverGrid .btn-server').forEach(b => b.classList.remove('active'));
-                el.classList.add('active');
-            }
-            
-            const container = document.getElementById('videoContainer');
-            container.innerHTML = '<div class="h-full w-full flex items-center justify-center bg-[#050505]"><div class="loading-pulse"></div></div>';
-            
-            const sources = [
-                `https://vidsrc.to/embed/anime/${currentStream.malId}/${currentStream.ep}`,
-                `https://vidsrc.me/embed/anime/${currentStream.malId}/${currentStream.ep}`
-            ];
-
-            setTimeout(() => {
-                container.innerHTML = `
-                    <iframe 
-                        src="${sources[idx]}" 
-                        allowfullscreen 
-                        referrerpolicy="no-referrer"
-                        allow="autoplay; fullscreen; picture-in-picture"
-                        style="width:100%; height:100%; border:none; background:#000;">
-                    </iframe>`;
-            }, 300);
+            document.getElementById('playerView').style.display = (state === 'player') ? 'flex' : 'none';
+            document.getElementById('animeModal').style.display = (state === 'detail' || state === 'player') ? 'block' : 'none';
+            document.getElementById('fullListView').style.display = (state === 'full') ? 'block' : 'none';
+            toggleBodyLock(!!state);
+            if (!state) document.getElementById('videoContainer').innerHTML = '';
         }
 
         async function openAnimeModal(id) {
@@ -316,7 +257,8 @@
             try {
                 const res = await fetch(`${API}/anime/${id}/full`);
                 const { data } = await res.json();
-                const total = data.episodes || 1;
+                let total = data.episodes; 
+                if (!total || data.status === "Currently Airing") { total = data.episodes || 1; }
                 let epHtml = '';
                 for(let i=1; i<=total; i++){
                     const safeTitle = data.title.replace(/'/g, "\\'");
@@ -326,33 +268,143 @@
             } catch(e) { content.innerHTML = '<p class="text-center py-20">Error Load Detail.</p>'; }
         }
 
+        async function startStreaming(malId, ep, rawTitle, totalEps) {
+            currentStream.malId = malId; currentStream.ep = ep; currentStream.title = rawTitle; currentStream.totalEps = totalEps || 1;
+            document.getElementById('pTitle').innerText = `${rawTitle} - EP ${ep}`;
+            document.getElementById('serverGrid').innerHTML = `<div class="btn-select active" onclick="changeServer(0, this)">SERVER HD</div><div class="btn-select" onclick="changeServer(1, this)">SERVER VIP</div>`;
+            const epContainer = document.getElementById('playerEpList');
+            let epsHtml = '';
+            for(let i = 1; i <= currentStream.totalEps; i++) {
+                const safeTitle = rawTitle.replace(/'/g, "\\'");
+                epsHtml += `<div class="btn-ep-player ${i===ep?'active':''}" onclick="startStreaming(${malId}, ${i}, '${safeTitle}', ${currentStream.totalEps})">${i}</div>`;
+            }
+            epContainer.innerHTML = epsHtml;
+            if(window.history.state?.v !== 'player') history.pushState({v:'player'}, '');
+            renderViews(); loadVideo(); document.getElementById('playerView').scrollTo(0,0);
+        }
+
+        function changeServer(idx, el) {
+            if(el) { document.querySelectorAll('#serverGrid .btn-select').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
+            currentStream.server = idx; loadVideo();
+        }
+
+        function changeQuality(q, el) {
+            document.querySelectorAll('#qualityGrid .btn-select').forEach(b => b.classList.remove('active')); 
+            el.classList.add('active'); currentStream.quality = q; loadVideo();
+        }
+
+        function loadVideo() {
+            const container = document.getElementById('videoContainer');
+            container.innerHTML = '<div class="h-full w-full flex items-center justify-center bg-[#050505]"><div class="loading-pulse"></div></div>';
+            const sources = [
+                `https://vidsrc.to/embed/anime/${currentStream.malId}/${currentStream.ep}`,
+                `https://vidsrc.me/embed/anime/${currentStream.malId}/${currentStream.ep}`
+            ];
+            setTimeout(() => { 
+                container.innerHTML = `<iframe src="${sources[currentStream.server]}" allowfullscreen referrerpolicy="no-referrer" allow="autoplay; fullscreen" style="width:100%; height:100%; border:none; background:#000;"></iframe>`; 
+            }, 300);
+        }
+
+        // BUKA FULL LIST DENGAN INFINITE SCROLL
         async function openFull(title, path) {
             document.getElementById('fullTitle').innerText = title;
+            document.getElementById('fullGrid').innerHTML = '';
+            fullViewState = { path: path, page: 1, hasNext: true, loading: false };
+            
             history.pushState({v:'full'}, '');
             renderViews();
-            const res = await fetch(`${API}${path}${path.includes('?')?'&':'?'}limit=24&sfw=true`);
-            const { data } = await res.json();
-            document.getElementById('fullGrid').innerHTML = data.map(a => `<div class="anime-item" onclick="openAnimeModal(${a.mal_id})"><div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div><h4 class="anime-title">${a.title}</h4></div>`).join('');
+            loadNextFullPage();
         }
+
+        async function loadNextFullPage() {
+            if (fullViewState.loading || !fullViewState.hasNext) return;
+            fullViewState.loading = true;
+            document.getElementById('fullLoader').style.display = 'block';
+
+            try {
+                const separator = fullViewState.path.includes('?') ? '&' : '?';
+                const res = await fetch(`${API}${fullViewState.path}${separator}page=${fullViewState.page}&limit=24&sfw=true`);
+                const { data, pagination } = await res.json();
+                
+                if (data && data.length > 0) {
+                    const html = data.map(a => `
+                        <div class="anime-item" onclick="openAnimeModal(${a.mal_id})">
+                            <div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div>
+                            <h4 class="anime-title">${a.title}</h4>
+                        </div>`).join('');
+                    document.getElementById('fullGrid').innerHTML += html;
+                    
+                    fullViewState.hasNext = pagination.has_next_page;
+                    fullViewState.page++;
+                } else {
+                    fullViewState.hasNext = false;
+                }
+            } catch(e) {
+                console.error("Full List Load Error", e);
+            } finally {
+                fullViewState.loading = false;
+                document.getElementById('fullLoader').style.display = 'none';
+            }
+        }
+
+        // Detect Scroll di Full View
+        document.getElementById('fullListView').onscroll = function() {
+            const container = this;
+            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 600) {
+                loadNextFullPage();
+            }
+        };
 
         async function init() {
             const main = document.getElementById('mainContent');
             const chips = document.getElementById('mainChips');
-            main.innerHTML = ''; chips.innerHTML = ''; 
+            main.innerHTML = ''; chips.innerHTML = '';
+            
             for(const c of CATS) {
                 chips.innerHTML += `<div class="chip" onclick="scrollToCat('${c.id}', this)">${c.name}</div>`;
-                main.innerHTML += `<div id="${c.id}" class="mb-12"><div class="section-header"><div class="section-title-group"><h3 class="section-title" style="color:${c.color}">${c.name}</h3><div class="section-bar" style="background:linear-gradient(90deg, ${c.color}, transparent)"></div></div><div class="see-all" style="color:${c.color}" onclick="openFull('${c.name}', '${c.query}')">Semua <i class="fa-solid fa-chevron-right ml-1"></i></div></div><div id="row-${c.id}" class="row-container"><div class="loading-pulse mt-8"></div></div></div>`;
+                main.innerHTML += `
+                <div id="${c.id}" class="mb-12">
+                    <div class="section-header">
+                        <div class="section-title-group">
+                            <h3 class="section-title" style="color:${c.color}">${c.name}</h3>
+                            <div class="section-bar" style="background:linear-gradient(90deg, ${c.color}, transparent)"></div>
+                        </div>
+                        <div class="see-all" style="color:${c.color}" onclick="openFull('${c.name}', '${c.query}')">Semua <i class="fa-solid fa-chevron-right ml-1"></i></div>
+                    </div>
+                    <div id="row-${c.id}" class="row-container">
+                        <div class="flex items-center justify-center w-full py-10"><div class="loading-pulse"></div></div>
+                    </div>
+                </div>`;
             }
-            for(const c of CATS) { await fetchRow(`${API}${c.query}`, `row-${c.id}`); await delay(400); }
+            
             document.querySelector('.chip').classList.add('active');
+
+            for (const c of CATS) {
+                await fetchRow(`${API}${c.query}`, `row-${c.id}`);
+                await delay(800);
+            }
         }
 
-        async function fetchRow(url, target) {
+        async function fetchRow(url, target, retryCount = 0) {
             try {
                 const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'limit=12&sfw=true');
+                if (res.status === 429 && retryCount < 3) {
+                    await delay(2000);
+                    return fetchRow(url, target, retryCount + 1);
+                }
                 const { data } = await res.json();
-                document.getElementById(target).innerHTML = data.map(a => `<div class="anime-item" onclick="openAnimeModal(${a.mal_id})"><div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div><h4 class="anime-title">${a.title}</h4></div>`).join('');
-            } catch(e) {}
+                document.getElementById(target).innerHTML = data.map(a => `
+                    <div class="anime-item" onclick="openAnimeModal(${a.mal_id})">
+                        <div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div>
+                        <h4 class="anime-title">${a.title}</h4>
+                    </div>`).join('');
+            } catch(e) {
+                document.getElementById(target).innerHTML = `
+                    <div class="w-full text-center py-10 opacity-40">
+                        <p class="text-[10px] mb-2">Gagal memuat kategori ini</p>
+                        <button onclick="fetchRow('${url}', '${target}')" class="text-[9px] font-bold text-white uppercase border border-white/20 px-4 py-1 rounded-full">Coba Lagi</button>
+                    </div>`;
+            }
         }
 
         function toggleMenu() {
