@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>KaeDesu v20.4 | Sultan Focused Edition</title>
+    <meta name="referrer" content="no-referrer">
+    <title>KaeDesu v20.7 | Sultan Navigation Pro</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <style>
-        /* [DESIGN LOCKED] - TIDAK ADA PERUBAHAN VISUAL */
+        /* [DESIGN SYSTEM - LOCKED] */
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         :root { --brand: #ff3e3e; }
         
@@ -39,23 +40,23 @@
         @keyframes nebulaMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
         
         .bg-overlay { 
-            position: fixed; inset: 0; z-index: -9; 
+            position: fixed; inset: 0; z-index: 1500; 
             background: rgba(0,0,0,0.8); opacity: 0;
             pointer-events: none; transition: opacity 0.4s ease;
         }
-        .bg-overlay.active { opacity: 1; pointer-events: auto; z-index: 2000; }
+        .bg-overlay.active { opacity: 1; pointer-events: auto; }
 
         .header-wrap { 
             position: fixed; top: 0; width: 100%; z-index: 1000; 
             background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
             border-bottom: 1px solid rgba(255,255,255,0.08);
-            transform: translateZ(0); backface-visibility: hidden;
+            transform: translateZ(0);
         }
         .brand-box { height: 50px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); padding: 0 18px; }
         .brand-text { font-weight: 800; letter-spacing: -1.5px; font-style: italic; font-size: 20px; text-transform: uppercase; }
         .neon-glow { color: var(--brand); text-shadow: 0 0 15px rgba(255, 62, 62, 0.8); }
 
-        .menu-toggle { width: 30px; height: 20px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; z-index: 2100; }
+        .menu-toggle { width: 30px; height: 20px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; z-index: 2500; position: relative; }
         .menu-toggle span { width: 100%; height: 2px; background: #fff; border-radius: 10px; transition: 0.3s; }
         .menu-toggle.active span:nth-child(1) { transform: translateY(9px) rotate(45deg); }
         .menu-toggle.active span:nth-child(2) { opacity: 0; }
@@ -63,7 +64,7 @@
 
         #sideMenu {
             position: fixed; top: 0; right: -100%; width: 75%; height: 100%;
-            background: #000; z-index: 2050; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #000; z-index: 2000; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex; flex-direction: column; border-left: 1px solid rgba(255,255,255,0.1);
         }
         #sideMenu.open { right: 0; }
@@ -160,8 +161,8 @@
 
     <div id="sideMenu">
         <div class="menu-content">
-            <a href="#" class="menu-link" onclick="toggleMenu()"><i class="fa-solid fa-house"></i> Home</a>
-            <a href="#" class="menu-link" onclick="openFull('Update', '/seasons/now'); toggleMenu()"><i class="fa-solid fa-fire"></i> New Update</a>
+            <a href="#" class="menu-link" onclick="toggleMenu(); closeToHome();"><i class="fa-solid fa-house"></i> Home</a>
+            <a href="#" class="menu-link" onclick="toggleMenu(); openFull('Update', '/seasons/now')"><i class="fa-solid fa-fire"></i> New Update</a>
             <a href="https://saweria.co/Kaedesu" target="_blank" class="menu-link" onclick="toggleMenu()"><i class="fa-solid fa-heart"></i> Saweria</a>
         </div>
         <div class="menu-footer">
@@ -190,7 +191,7 @@
 
     <div id="fullListView">
         <div class="view-header">
-            <div class="btn-back" onclick="history.back()"><i class="fa-solid fa-arrow-left"></i></div>
+            <div class="btn-back" onclick="history.back()"><i class="fa-solid fa-arrow-left text-white"></i></div>
             <div class="view-title" id="fullTitle">KATEGORI</div>
         </div>
         <div class="grid-container" id="fullGrid"></div>
@@ -231,110 +232,91 @@
             { name: 'Harem', id: 'catHarem', query: '/anime?genres=35', color: '#f43f5e' }
         ];
 
-        // SULTAN ENGINE: SLUG CLEANER (Biar videonya auto-found)
         function createSlug(title) {
-            return title.toLowerCase()
-                .split(':')[0]
-                .split('(')[0]
-                .replace(/[^\w\s-]/g, '')
-                .trim()
-                .replace(/\s+/g, '-')
-                .replace(/-+/g, '-');
+            return title.toLowerCase().split(':')[0].split('(')[0].split('-')[0]
+                .replace(/season \d+|2nd season|3rd season|part \d+/g, '')
+                .replace(/[^\w\s]/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-');
+        }
+
+        // FUNGSI NAVIGASI CERDAS SULTAN
+        function closeToHome() {
+            // Hapus semua history state agar balik ke Home awal
+            while(window.history.state && window.history.state.v) {
+                window.history.back();
+            }
+            renderViews();
+        }
+
+        function renderViews() {
+            const state = window.history.state ? window.history.state.v : null;
+            
+            // Sembunyikan semua dulu
+            document.getElementById('playerView').style.display = 'none';
+            document.getElementById('animeModal').style.display = 'none';
+            document.getElementById('fullListView').style.display = 'none';
+            document.getElementById('videoContainer').innerHTML = '';
+
+            // Tampilkan berdasarkan Hirarki State
+            if (state === 'player') {
+                document.getElementById('playerView').style.display = 'flex';
+                document.getElementById('animeModal').style.display = 'block'; // Tetap ada di bawah player
+                // FullList ditampilkan kalau player dibuka dari FullList
+                if(window.history.state.from === 'full') document.getElementById('fullListView').style.display = 'block';
+            } 
+            else if (state === 'detail') {
+                document.getElementById('animeModal').style.display = 'block';
+                if(window.history.state.from === 'full') document.getElementById('fullListView').style.display = 'block';
+            } 
+            else if (state === 'full') {
+                document.getElementById('fullListView').style.display = 'block';
+            }
         }
 
         async function startStreaming(title, ep, rawTitle) {
+            const isFromFull = window.history.state && (window.history.state.v === 'full' || window.history.state.from === 'full');
             document.getElementById('pTitle').innerText = `${title} - EP ${ep}`;
             const slug = createSlug(rawTitle);
             
-            const servers = ['Server 1', 'Server 2', 'Server 3'];
-            document.getElementById('serverGrid').innerHTML = servers.map((s, i) => `
+            document.getElementById('serverGrid').innerHTML = ['Server 1', 'Server 2', 'Server 3'].map((s, i) => `
                 <div class="btn-server ${i===0?'active':''}" onclick="changeServer('${slug}', ${ep}, this)">${s}</div>
             `).join('');
 
             changeServer(slug, ep);
-            document.getElementById('playerView').style.display = 'flex';
-            history.pushState({v:'player'}, '');
+            history.pushState({v:'player', from: isFromFull ? 'full' : 'home'}, '');
+            renderViews();
         }
 
-        // SULTAN ENGINE: PLAYER BYPASS (Fokus video ngeplay)
         function changeServer(slug, ep, el) {
             if(el) {
                 document.querySelectorAll('.btn-server').forEach(b => b.classList.remove('active'));
                 el.classList.add('active');
             }
-
             const serverIdx = el ? Array.from(el.parentNode.children).indexOf(el) : 0;
             const providers = [
                 `https://www.nani.my.id/embed/${slug}/${ep}`,
                 `https://p2p.otakudesu.cloud/embed/${slug}/${ep}`,
                 `https://api.kaedesu.workers.dev/embed/${slug}/${ep}`
             ];
-
-            const embedUrl = providers[serverIdx] || providers[0];
-
-            // Bypass iframe security & prevent blank
             document.getElementById('videoContainer').innerHTML = `
-                <iframe 
-                    src="${embedUrl}" 
-                    allowfullscreen="true" 
-                    referrerpolicy="no-referrer"
-                    sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation"
-                    allow="autoplay; encrypted-media">
-                </iframe>`;
-        }
-
-        async function init() {
-            const main = document.getElementById('mainContent');
-            const chips = document.getElementById('mainChips');
-            main.innerHTML = ''; chips.innerHTML = ''; 
-            for(const c of CATS) {
-                chips.innerHTML += `<div class="chip" id="chip-${c.id}" onclick="scrollToCat('${c.id}', this)">${c.name}</div>`;
-                main.innerHTML += `
-                    <div id="${c.id}" class="mb-12">
-                        <div class="section-header">
-                            <div class="section-title-group">
-                                <h3 class="section-title" style="color:${c.color}">${c.name}</h3>
-                                <div class="section-bar" style="background:linear-gradient(90deg, ${c.color}, transparent)"></div>
-                            </div>
-                            <div class="see-all" style="color:${c.color}" onclick="openFull('${c.name}', '${c.query}')">Semua <i class="fa-solid fa-chevron-right ml-1"></i></div>
-                        </div>
-                        <div id="row-${c.id}" class="row-container"><div class="loading-pulse mt-8"></div></div>
-                    </div>`;
-            }
-            for(const c of CATS) {
-                await fetchRow(`${API}${c.query}`, `row-${c.id}`);
-                await delay(1000); // Fokus kestabilan request
-            }
-            document.querySelector('.chip').classList.add('active');
-        }
-
-        async function fetchRow(url, target) {
-            try {
-                const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'limit=12&sfw=true');
-                const { data } = await res.json();
-                if(data) {
-                    document.getElementById(target).innerHTML = data.map(a => `
-                        <div class="anime-item" onclick="openAnimeModal(${a.mal_id})">
-                            <div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div>
-                            <h4 class="anime-title">${a.title}</h4>
-                        </div>`).join('');
-                }
-            } catch(e) {}
+                <iframe src="${providers[serverIdx] || providers[0]}" allowfullscreen="true" referrerpolicy="no-referrer"
+                sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation" allow="autoplay; encrypted-media"></iframe>`;
         }
 
         async function openAnimeModal(id) {
+            const isFromFull = window.history.state && (window.history.state.v === 'full' || window.history.state.from === 'full');
             const modal = document.getElementById('animeModal');
             const content = document.getElementById('modalContent');
-            modal.style.display = 'block';
+            
+            history.pushState({v:'detail', from: isFromFull ? 'full' : 'home'}, '');
+            renderViews();
+            
             content.innerHTML = '<div class="h-screen flex items-center justify-center"><div class="loading-pulse"></div></div>';
-            history.pushState({v:'detail'}, '');
 
             try {
                 const res = await fetch(`${API}/anime/${id}/full`);
                 const { data } = await res.json();
                 let epHtml = '';
-                const totalEp = data.episodes || 12;
-                for(let i=1; i<=totalEp; i++){
+                for(let i=1; i<=(data.episodes || 12); i++){
                     epHtml += `
                     <div class="ep-box" onclick="startStreaming('${data.title.replace(/'/g, "")}', ${i}, '${data.title}')">
                         <span class="ep-tag">Episode ${i}</span>
@@ -352,13 +334,14 @@
                         <div class="m-divider"><span class="m-divider-text">Daftar Episode</span><div class="m-divider-line"></div></div>
                         <div class="ep-list">${epHtml}</div>
                     </div>`;
-            } catch(e) { content.innerHTML = '<p class="text-center py-20">Error Loading.</p>'; }
+            } catch(e) { content.innerHTML = '<p class="text-center py-20">Error.</p>'; }
         }
 
         async function openFull(title, path) {
             document.getElementById('fullTitle').innerText = title;
-            document.getElementById('fullListView').style.display = 'block';
             history.pushState({v:'full'}, '');
+            renderViews();
+            
             const res = await fetch(`${API}${path}${path.includes('?')?'&':'?'}limit=24&sfw=true`);
             const { data } = await res.json();
             document.getElementById('fullGrid').innerHTML = data.map(a => `
@@ -366,6 +349,39 @@
                     <div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div>
                     <h4 class="anime-title">${a.title}</h4>
                 </div>`).join('');
+        }
+
+        async function init() {
+            const main = document.getElementById('mainContent');
+            const chips = document.getElementById('mainChips');
+            main.innerHTML = ''; chips.innerHTML = ''; 
+            for(const c of CATS) {
+                chips.innerHTML += `<div class="chip" id="chip-${c.id}" onclick="scrollToCat('${c.id}', this)">${c.name}</div>`;
+                main.innerHTML += `
+                    <div id="${c.id}" class="mb-12">
+                        <div class="section-header">
+                            <div class="section-title-group"><h3 class="section-title" style="color:${c.color}">${c.name}</h3><div class="section-bar" style="background:linear-gradient(90deg, ${c.color}, transparent)"></div></div>
+                            <div class="see-all" style="color:${c.color}" onclick="openFull('${c.name}', '${c.query}')">Semua <i class="fa-solid fa-chevron-right ml-1"></i></div>
+                        </div>
+                        <div id="row-${c.id}" class="row-container"><div class="loading-pulse mt-8"></div></div>
+                    </div>`;
+            }
+            for(const c of CATS) { await fetchRow(`${API}${c.query}`, `row-${c.id}`); await delay(500); }
+            document.querySelector('.chip').classList.add('active');
+        }
+
+        async function fetchRow(url, target) {
+            try {
+                const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'limit=12&sfw=true');
+                const { data } = await res.json();
+                if(data) {
+                    document.getElementById(target).innerHTML = data.map(a => `
+                        <div class="anime-item" onclick="openAnimeModal(${a.mal_id})">
+                            <div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div>
+                            <h4 class="anime-title">${a.title}</h4>
+                        </div>`).join('');
+                }
+            } catch(e) {}
         }
 
         function toggleMenu() {
@@ -386,12 +402,9 @@
             if(val.length > 2) openFull('Hasil Cari', `/anime?q=${encodeURIComponent(val)}`);
         };
 
-        // SULTAN ENGINE: SMART POPSTATE (Navigasi Back Anti-Gagal)
         window.onpopstate = () => {
-            document.getElementById('playerView').style.display = 'none';
-            document.getElementById('videoContainer').innerHTML = '';
-            document.getElementById('animeModal').style.display = 'none';
-            document.getElementById('fullListView').style.display = 'none';
+            renderViews();
+            if(document.getElementById('menuToggle').classList.contains('active')) toggleMenu();
         };
 
         init();
