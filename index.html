@@ -214,6 +214,10 @@
     <script>
         const API = 'https://api.jikan.moe/v4';
         const delay = ms => new Promise(res => setTimeout(res, ms));
+        
+        // KONFIGURASI API INDO (Proxy/Scraper)
+        // Jika Bapak sudah deploy scraper MastayY, ganti URL dasar di bawah ini
+        const INDO_SCRAPER_API = 'https://api-otakudesu-seven.vercel.app/api'; 
 
         const CATS = [
             { name: 'Update', id: 'catTrend', query: '/seasons/now', color: '#ff3e3e' },
@@ -226,9 +230,7 @@
             { name: 'Harem', id: 'catHarem', query: '/anime?genres=35', color: '#f43f5e' }
         ];
 
-        let currentStream = { malId: 0, ep: 1, title: '', totalEps: 1, quality: '720p', server: 0 };
-        
-        // Paginasi State untuk Full View
+        let currentStream = { malId: 0, ep: 1, title: '', totalEps: 1, quality: '720p', server: 0, slugIndo: '' };
         let fullViewState = { path: '', page: 1, hasNext: true, loading: false };
 
         function closeToHome() {
@@ -257,6 +259,11 @@
             try {
                 const res = await fetch(`${API}/anime/${id}/full`);
                 const { data } = await res.json();
+                
+                // Cari apakah ada versi Indo-nya (slug)
+                const slug = await findIndoSlug(data.title);
+                currentStream.slugIndo = slug;
+
                 let total = data.episodes; 
                 if (!total || data.status === "Currently Airing") { total = data.episodes || 1; }
                 let epHtml = '';
@@ -268,10 +275,27 @@
             } catch(e) { content.innerHTML = '<p class="text-center py-20">Error Load Detail.</p>'; }
         }
 
+        // FUNGSI BARU: Cari Slug Otakudesu berdasarkan judul
+        async function findIndoSlug(title) {
+            try {
+                const res = await fetch(`${INDO_SCRAPER_API}/search/${encodeURIComponent(title)}`);
+                const data = await res.json();
+                if(data.status === 'success' && data.data.length > 0) return data.data[0].slug;
+                return '';
+            } catch(e) { return ''; }
+        }
+
         async function startStreaming(malId, ep, rawTitle, totalEps) {
             currentStream.malId = malId; currentStream.ep = ep; currentStream.title = rawTitle; currentStream.totalEps = totalEps || 1;
             document.getElementById('pTitle').innerText = `${rawTitle} - EP ${ep}`;
-            document.getElementById('serverGrid').innerHTML = `<div class="btn-select active" onclick="changeServer(0, this)">SERVER HD</div><div class="btn-select" onclick="changeServer(1, this)">SERVER VIP</div>`;
+            
+            // Siapkan server (Server 1 & 2 Indo, Server 3 & 4 Global)
+            document.getElementById('serverGrid').innerHTML = `
+                <div class="btn-select active" onclick="changeServer(0, this)">SERVER INDO 1</div>
+                <div class="btn-select" onclick="changeServer(1, this)">SERVER INDO 2</div>
+                <div class="btn-select" onclick="changeServer(2, this)">SERVER GLOBAL</div>
+            `;
+
             const epContainer = document.getElementById('playerEpList');
             let epsHtml = '';
             for(let i = 1; i <= currentStream.totalEps; i++) {
@@ -293,24 +317,49 @@
             el.classList.add('active'); currentStream.quality = q; loadVideo();
         }
 
-        function loadVideo() {
+        // LOGIKA BARU: Load Video dengan gabungan Indo & Global
+        async function loadVideo() {
             const container = document.getElementById('videoContainer');
             container.innerHTML = '<div class="h-full w-full flex items-center justify-center bg-[#050505]"><div class="loading-pulse"></div></div>';
-            const sources = [
-                `https://vidsrc.to/embed/anime/${currentStream.malId}/${currentStream.ep}`,
-                `https://vidsrc.me/embed/anime/${currentStream.malId}/${currentStream.ep}`
-            ];
+            
+            let finalUrl = "";
+            
+            // Jika pilih Server Indo (0 atau 1)
+            if((currentStream.server === 0 || currentStream.server === 1) && currentStream.slugIndo) {
+                try {
+                    // Tarik data episode dari scraper
+                    const res = await fetch(`${INDO_SCRAPER_API}/anime/${currentStream.slugIndo}/episodes`);
+                    const data = await res.json();
+                    // Cari episode yang sesuai
+                    const epData = data.data.find(e => e.episode === currentStream.ep);
+                    if(epData) {
+                        const streamRes = await fetch(`${INDO_SCRAPER_API}/episode/${epData.slug}`);
+                        const streamData = await streamRes.json();
+                        // Ambil link stream sesuai server/resolusi
+                        finalUrl = streamData.data.stream_url[currentStream.server].url;
+                    }
+                } catch(e) { console.log("Gagal tarik Indo, pindah Global"); }
+            }
+
+            // Fallback Global jika Indo gagal atau user pilih Server Global (2)
+            if(!finalUrl) {
+                const globalSources = [
+                    `https://vidsrc.to/embed/anime/${currentStream.malId}/${currentStream.ep}`,
+                    `https://vidsrc.xyz/embed/anime/${currentStream.malId}/${currentStream.ep}`,
+                    `https://vidsrc.me/embed/anime/${currentStream.malId}/${currentStream.ep}`
+                ];
+                finalUrl = globalSources[currentStream.server % globalSources.length];
+            }
+
             setTimeout(() => { 
-                container.innerHTML = `<iframe src="${sources[currentStream.server]}" allowfullscreen referrerpolicy="no-referrer" allow="autoplay; fullscreen" style="width:100%; height:100%; border:none; background:#000;"></iframe>`; 
-            }, 300);
+                container.innerHTML = `<iframe src="${finalUrl}" allowfullscreen referrerpolicy="no-referrer" allow="autoplay; fullscreen" sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation" style="width:100%; height:100%; border:none; background:#000;"></iframe>`; 
+            }, 500);
         }
 
-        // BUKA FULL LIST DENGAN INFINITE SCROLL
         async function openFull(title, path) {
             document.getElementById('fullTitle').innerText = title;
             document.getElementById('fullGrid').innerHTML = '';
             fullViewState = { path: path, page: 1, hasNext: true, loading: false };
-            
             history.pushState({v:'full'}, '');
             renderViews();
             loadNextFullPage();
@@ -320,90 +369,44 @@
             if (fullViewState.loading || !fullViewState.hasNext) return;
             fullViewState.loading = true;
             document.getElementById('fullLoader').style.display = 'block';
-
             try {
-                const separator = fullViewState.path.includes('?') ? '&' : '?';
-                const res = await fetch(`${API}${fullViewState.path}${separator}page=${fullViewState.page}&limit=24&sfw=true`);
+                const res = await fetch(`${API}${fullViewState.path}${fullViewState.path.includes('?')?'&':'?'}page=${fullViewState.page}&limit=24&sfw=true`);
                 const { data, pagination } = await res.json();
-                
                 if (data && data.length > 0) {
-                    const html = data.map(a => `
-                        <div class="anime-item" onclick="openAnimeModal(${a.mal_id})">
-                            <div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div>
-                            <h4 class="anime-title">${a.title}</h4>
-                        </div>`).join('');
-                    document.getElementById('fullGrid').innerHTML += html;
-                    
+                    document.getElementById('fullGrid').innerHTML += data.map(a => `<div class="anime-item" onclick="openAnimeModal(${a.mal_id})"><div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div><h4 class="anime-title">${a.title}</h4></div>`).join('');
                     fullViewState.hasNext = pagination.has_next_page;
                     fullViewState.page++;
-                } else {
-                    fullViewState.hasNext = false;
-                }
-            } catch(e) {
-                console.error("Full List Load Error", e);
-            } finally {
+                } else { fullViewState.hasNext = false; }
+            } catch(e) {} finally {
                 fullViewState.loading = false;
                 document.getElementById('fullLoader').style.display = 'none';
             }
         }
 
-        // Detect Scroll di Full View
         document.getElementById('fullListView').onscroll = function() {
-            const container = this;
-            if (container.scrollTop + container.clientHeight >= container.scrollHeight - 600) {
-                loadNextFullPage();
-            }
+            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 600) loadNextFullPage();
         };
 
         async function init() {
             const main = document.getElementById('mainContent');
             const chips = document.getElementById('mainChips');
             main.innerHTML = ''; chips.innerHTML = '';
-            
             for(const c of CATS) {
                 chips.innerHTML += `<div class="chip" onclick="scrollToCat('${c.id}', this)">${c.name}</div>`;
-                main.innerHTML += `
-                <div id="${c.id}" class="mb-12">
-                    <div class="section-header">
-                        <div class="section-title-group">
-                            <h3 class="section-title" style="color:${c.color}">${c.name}</h3>
-                            <div class="section-bar" style="background:linear-gradient(90deg, ${c.color}, transparent)"></div>
-                        </div>
-                        <div class="see-all" style="color:${c.color}" onclick="openFull('${c.name}', '${c.query}')">Semua <i class="fa-solid fa-chevron-right ml-1"></i></div>
-                    </div>
-                    <div id="row-${c.id}" class="row-container">
-                        <div class="flex items-center justify-center w-full py-10"><div class="loading-pulse"></div></div>
-                    </div>
-                </div>`;
+                main.innerHTML += `<div id="${c.id}" class="mb-12"><div class="section-header"><div class="section-title-group"><h3 class="section-title" style="color:${c.color}">${c.name}</h3><div class="section-bar" style="background:linear-gradient(90deg, ${c.color}, transparent)"></div></div><div class="see-all" style="color:${c.color}" onclick="openFull('${c.name}', '${c.query}')">Semua <i class="fa-solid fa-chevron-right ml-1"></i></div></div><div id="row-${c.id}" class="row-container"><div class="flex items-center justify-center w-full py-10"><div class="loading-pulse"></div></div></div></div>`;
             }
-            
             document.querySelector('.chip').classList.add('active');
-
-            for (const c of CATS) {
-                await fetchRow(`${API}${c.query}`, `row-${c.id}`);
-                await delay(800);
-            }
+            for (const c of CATS) { await fetchRow(`${API}${c.query}`, `row-${c.id}`); await delay(800); }
         }
 
         async function fetchRow(url, target, retryCount = 0) {
             try {
                 const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'limit=12&sfw=true');
-                if (res.status === 429 && retryCount < 3) {
-                    await delay(2000);
-                    return fetchRow(url, target, retryCount + 1);
-                }
+                if (res.status === 429 && retryCount < 3) { await delay(2000); return fetchRow(url, target, retryCount + 1); }
                 const { data } = await res.json();
-                document.getElementById(target).innerHTML = data.map(a => `
-                    <div class="anime-item" onclick="openAnimeModal(${a.mal_id})">
-                        <div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div>
-                        <h4 class="anime-title">${a.title}</h4>
-                    </div>`).join('');
+                document.getElementById(target).innerHTML = data.map(a => `<div class="anime-item" onclick="openAnimeModal(${a.mal_id})"><div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div><h4 class="anime-title">${a.title}</h4></div>`).join('');
             } catch(e) {
-                document.getElementById(target).innerHTML = `
-                    <div class="w-full text-center py-10 opacity-40">
-                        <p class="text-[10px] mb-2">Gagal memuat kategori ini</p>
-                        <button onclick="fetchRow('${url}', '${target}')" class="text-[9px] font-bold text-white uppercase border border-white/20 px-4 py-1 rounded-full">Coba Lagi</button>
-                    </div>`;
+                document.getElementById(target).innerHTML = `<div class="w-full text-center py-10 opacity-40"><button onclick="fetchRow('${url}', '${target}')" class="text-[9px] font-bold text-white uppercase border border-white/20 px-4 py-1 rounded-full">Retry</button></div>`;
             }
         }
 
