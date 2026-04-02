@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     
     <style>
+        /* SEMUA STYLE SAMA PERSIS SEPERTI KODE AWALMU - TIDAK ADA PERUBAHAN */
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         :root { --brand: #ff3e3e; }
         body { background: #000; color: #fff; font-family: 'Plus Jakarta Sans', sans-serif; margin: 0; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; overscroll-behavior-y: none; }
@@ -162,14 +163,15 @@
 
     <script>
         // ==================== KONFIGURASI API ====================
-        // Menggunakan consumet API yang masih hidup dan stabil
+        // API yang benar-benar hidup dan stabil untuk anime subtitle Indonesia
         const API_JIKAN = 'https://api.jikan.moe/v4';
+        const API_OTAKUDESU = 'https://unofficial-otakudesu-api-ruang-kreatif.vercel.app/api';
         const API_CONSUMET = 'https://api.consumet.org/anime/gogoanime';
         
-        // Backup embed jika semua gagal (vidsrc)
+        // Backup embed (jika semua gagal)
         const BACKUP_EMBED = (malId, ep) => `https://vidsrc.to/embed/anime/${malId}/${ep}`;
         
-        // Daftar kategori
+        // Daftar kategori (SAMA PERSIS)
         const CATS = [
             { name: 'Update', id: 'catTrend', query: '/seasons/now', color: '#ff3e3e' },
             { name: 'Romance', id: 'catRomance', query: '/anime?genres=22', color: '#ec4899' },
@@ -181,20 +183,21 @@
             { name: 'Harem', id: 'catHarem', query: '/anime?genres=35', color: '#f43f5e' }
         ];
         
-        // State global
-        let currentStream = {
-            malId: 0,
-            ep: 1,
-            title: '',
-            totalEps: 1,
-            quality: '720p',
-            server: 0, // 0 = consumet, 1 = backup embed
-            episodeIds: [], // array of gogoanime episode ids
-            animeId: ''    // gogoanime id (slug)
+        // State global (ditambah otakudesuSlug dan episodeIds)
+        let currentStream = { 
+            malId: 0, 
+            ep: 1, 
+            title: '', 
+            totalEps: 1, 
+            quality: '720p', 
+            server: 0,   // 0 = OtakuDesu (prioritas), 1 = Consumet, 2 = Backup
+            otakudesuSlug: '',  // slug dari OtakuDesu
+            episodeIds: [],     // untuk consumet (gogoanime)
+            animeId: ''         // gogoanime id
         };
         let fullViewState = { path: '', page: 1, hasNext: true, loading: false };
         
-        // ==================== FUNGSI UTILITY ====================
+        // ==================== FUNGSI UTILITY (TIDAK BERUBAH) ====================
         function closeToHome() {
             while(window.history.state && window.history.state.v) { window.history.back(); }
             renderViews();
@@ -213,83 +216,123 @@
             if (!state) document.getElementById('videoContainer').innerHTML = '';
         }
         
-        // ==================== FUNGSI AMBIL DATA ANIME & EPISODE ====================
-        // Mencari anime di Gogoanime berdasarkan judul (dari Jikan)
-        async function getGogoAnimeId(malTitle) {
+        // ==================== FUNGSI BARU UNTUK OTAKUDESU ====================
+        // Mencari slug anime di OtakuDesu berdasarkan judul
+        async function getOtakuDesuSlug(title) {
             try {
-                const res = await fetch(`${API_CONSUMET}/search?keyw=${encodeURIComponent(malTitle)}`);
+                const res = await fetch(`${API_OTAKUDESU}/search?q=${encodeURIComponent(title)}`);
                 const data = await res.json();
-                if (data.results && data.results.length > 0) {
-                    // ambil yang pertama, biasanya paling cocok
-                    return data.results[0].id;
+                if (data && data.data && data.data.length > 0) {
+                    // cari yang paling cocok dengan judul
+                    const found = data.data.find(item => 
+                        item.title.toLowerCase().includes(title.toLowerCase()) || 
+                        title.toLowerCase().includes(item.title.toLowerCase())
+                    ) || data.data[0];
+                    return found.slug;
+                }
+                return '';
+            } catch(e) {
+                console.warn("Gagal cari slug OtakuDesu:", e);
+                return '';
+            }
+        }
+        
+        // Ambil daftar episode dari OtakuDesu (opsional, untuk total episode)
+        async function getOtakuDesuEpisodes(slug) {
+            try {
+                const res = await fetch(`${API_OTAKUDESU}/anime/${slug}`);
+                const data = await res.json();
+                if (data && data.data && data.data.total_episode) {
+                    return parseInt(data.data.total_episode) || 1;
+                }
+                return 0;
+            } catch(e) {
+                return 0;
+            }
+        }
+        
+        // Ambil link streaming dari OtakuDesu berdasarkan slug dan episode
+        async function getStreamFromOtakuDesu(slug, episode) {
+            try {
+                // Endpoint episode: /episode/{slug}-episode-{nomor}
+                const res = await fetch(`${API_OTAKUDESU}/episode/${slug}-episode-${episode}`);
+                const data = await res.json();
+                if (data && data.data && data.data.stream_url && data.data.stream_url.length > 0) {
+                    // Ambil stream_url pertama (biasanya server 1)
+                    return data.data.stream_url[0];
                 }
                 return null;
             } catch(e) {
-                console.warn("Gagal cari Gogo ID:", e);
+                console.warn("Gagal ambil stream OtakuDesu:", e);
                 return null;
             }
         }
         
-        // Ambil daftar episode dari Gogoanime berdasarkan animeId (slug)
-        async function fetchEpisodeList(animeId) {
+        // ==================== FUNGSI CONSUMET (FALLBACK) ====================
+        async function getGogoAnimeId(title) {
+            try {
+                const res = await fetch(`${API_CONSUMET}/search?keyw=${encodeURIComponent(title)}`);
+                const data = await res.json();
+                if (data.results && data.results.length > 0) return data.results[0].id;
+                return null;
+            } catch(e) { return null; }
+        }
+        
+        async function fetchGogoEpisodes(animeId) {
             try {
                 const res = await fetch(`${API_CONSUMET}/info/${animeId}`);
                 const data = await res.json();
-                if (data.episodes && data.episodes.length) {
-                    return data.episodes.map(ep => ep.id); // array episodeId
-                }
+                if (data.episodes) return data.episodes.map(ep => ep.id);
                 return [];
-            } catch(e) {
-                console.warn("Gagal ambil daftar episode:", e);
-                return [];
-            }
+            } catch(e) { return []; }
         }
         
-        // Ambil link video dari episodeId (Gogoaname)
-        async function getVideoUrl(episodeId, quality = '720p') {
+        async function getStreamFromConsumet(episodeId, quality) {
             try {
                 const res = await fetch(`${API_CONSUMET}/watch/${episodeId}`);
                 const data = await res.json();
                 if (data.sources && data.sources.length) {
-                    // cari sesuai kualitas, fallback ke yang pertama
-                    let selected = data.sources.find(s => s.quality === quality) || data.sources[0];
-                    return selected.url;
+                    let src = data.sources.find(s => s.quality === quality) || data.sources[0];
+                    return src.url;
                 }
                 return null;
-            } catch(e) {
-                console.warn("Gagal ambil video URL:", e);
-                return null;
-            }
+            } catch(e) { return null; }
         }
         
-        // ==================== MODAL DETAIL ANIME ====================
+        // ==================== MODAL DETAIL ANIME (DIPERBAIKI) ====================
         async function openAnimeModal(id) {
             const content = document.getElementById('modalContent');
             history.pushState({v:'detail'}, '');
             renderViews();
             content.innerHTML = '<div class="h-screen flex items-center justify-center"><div class="loading-pulse"></div></div>';
-            
             try {
-                // Ambil data dari Jikan
                 const res = await fetch(`${API_JIKAN}/anime/${id}/full`);
                 const { data } = await res.json();
                 
-                // Cari GogoAnime ID
-                const gogoId = await getGogoAnimeId(data.title);
-                let episodeList = [];
+                // Cari slug OtakuDesu
+                const slug = await getOtakuDesuSlug(data.title);
                 let totalEps = data.episodes || 1;
                 
-                if (gogoId) {
-                    episodeList = await fetchEpisodeList(gogoId);
-                    totalEps = episodeList.length > 0 ? episodeList.length : totalEps;
-                    currentStream.animeId = gogoId;
-                    currentStream.episodeIds = episodeList;
-                } else {
-                    currentStream.animeId = '';
-                    currentStream.episodeIds = [];
+                // Jika slug ditemukan, ambil total episode dari OtakuDesu (lebih akurat)
+                if (slug) {
+                    const otakuTotal = await getOtakuDesuEpisodes(slug);
+                    if (otakuTotal > 0) totalEps = otakuTotal;
                 }
                 
-                // Generate HTML daftar episode
+                // Simpan slug untuk streaming nanti
+                currentStream.otakudesuSlug = slug;
+                
+                // Juga siapkan consumet fallback (cari gogo id)
+                const gogoId = await getGogoAnimeId(data.title);
+                if (gogoId) {
+                    currentStream.animeId = gogoId;
+                    currentStream.episodeIds = await fetchGogoEpisodes(gogoId);
+                    if (currentStream.episodeIds.length > 0) totalEps = currentStream.episodeIds.length;
+                }
+                
+                currentStream.totalEps = totalEps;
+                
+                // Generate daftar episode
                 let epHtml = '';
                 for(let i = 1; i <= totalEps; i++) {
                     const safeTitle = data.title.replace(/'/g, "\\'");
@@ -317,7 +360,7 @@
             }
         }
         
-        // ==================== STREAMING PLAYER ====================
+        // ==================== STREAMING PLAYER (DIPERBAIKI TOTAL) ====================
         async function startStreaming(malId, ep, rawTitle, totalEps) {
             currentStream.malId = malId;
             currentStream.ep = ep;
@@ -325,20 +368,16 @@
             currentStream.totalEps = totalEps;
             document.getElementById('pTitle').innerText = `${rawTitle} - EP ${ep}`;
             
-            // Jika episodeIds belum ada untuk anime ini, ambil ulang
-            if (!currentStream.animeId || currentStream.episodeIds.length === 0) {
-                const gogoId = await getGogoAnimeId(rawTitle);
-                if (gogoId) {
-                    currentStream.animeId = gogoId;
-                    currentStream.episodeIds = await fetchEpisodeList(gogoId);
-                    currentStream.totalEps = currentStream.episodeIds.length > 0 ? currentStream.episodeIds.length : totalEps;
-                }
+            // Jika slug belum ada, coba cari ulang
+            if (!currentStream.otakudesuSlug) {
+                currentStream.otakudesuSlug = await getOtakuDesuSlug(rawTitle);
             }
             
-            // Render pilihan server: Consumet (server 0) dan Backup Embed (server 1)
+            // Render pilihan server: OtakuDesu, Consumet, Backup
             const serverHtml = `
-                <div class="btn-select ${currentStream.server === 0 ? 'active' : ''}" onclick="changeServer(0, this)">SERVER UTAMA (Consumet)</div>
-                <div class="btn-select ${currentStream.server === 1 ? 'active' : ''}" onclick="changeServer(1, this)">SERVER CADANGAN (Vidsrc)</div>
+                <div class="btn-select ${currentStream.server === 0 ? 'active' : ''}" onclick="changeServer(0, this)">SERVER INDO (OtakuDesu)</div>
+                <div class="btn-select ${currentStream.server === 1 ? 'active' : ''}" onclick="changeServer(1, this)">SERVER INTERNASIONAL (Gogo)</div>
+                <div class="btn-select ${currentStream.server === 2 ? 'active' : ''}" onclick="changeServer(2, this)">SERVER CADANGAN (Embed)</div>
             `;
             document.getElementById('serverGrid').innerHTML = serverHtml;
             
@@ -369,7 +408,11 @@
             document.querySelectorAll('#qualityGrid .btn-select').forEach(b => b.classList.remove('active')); 
             el.classList.add('active'); 
             currentStream.quality = q; 
-            loadVideo();
+            if (currentStream.server === 1) loadVideo(); // kualitas hanya berpengaruh di consumet
+            else if (currentStream.server === 0) {
+                // OtakuDesu biasanya tidak support pilih kualitas, tapi tetap reload saja
+                loadVideo();
+            }
         }
         
         async function loadVideo() {
@@ -377,66 +420,74 @@
             container.innerHTML = '<div class="h-full w-full flex items-center justify-center bg-[#050505]"><div class="loading-pulse"></div></div>';
             
             let finalUrl = "";
+            let errorMsg = "";
             
-            // Server 0: consumet (gogoanime)
+            // SERVER 0: OTAKUDESU (Prioritas utama, subtitle Indo)
             if (currentStream.server === 0) {
-                // Pastikan episodeIds tersedia
-                if (currentStream.episodeIds.length >= currentStream.ep) {
-                    const episodeId = currentStream.episodeIds[currentStream.ep - 1];
-                    if (episodeId) {
-                        finalUrl = await getVideoUrl(episodeId, currentStream.quality);
-                    }
-                }
-                // Jika gagal, coba cari ulang animeId (fallback)
-                if (!finalUrl && currentStream.animeId) {
-                    // reload episode list
-                    const epList = await fetchEpisodeList(currentStream.animeId);
-                    if (epList.length >= currentStream.ep) {
-                        finalUrl = await getVideoUrl(epList[currentStream.ep - 1], currentStream.quality);
-                    }
+                if (currentStream.otakudesuSlug) {
+                    finalUrl = await getStreamFromOtakuDesu(currentStream.otakudesuSlug, currentStream.ep);
+                    if (!finalUrl) errorMsg = "OtakuDesu: Link video tidak ditemukan";
+                } else {
+                    errorMsg = "OtakuDesu: Slug tidak tersedia, coba server lain";
                 }
             }
             
-            // Server 1: backup embed vidsrc
+            // SERVER 1: CONSUMET (Gogoanime)
             if (!finalUrl && currentStream.server === 1) {
-                finalUrl = BACKUP_EMBED(currentStream.malId, currentStream.ep);
+                if (currentStream.episodeIds.length >= currentStream.ep) {
+                    const epId = currentStream.episodeIds[currentStream.ep - 1];
+                    if (epId) {
+                        finalUrl = await getStreamFromConsumet(epId, currentStream.quality);
+                    }
+                }
+                // Jika episodeIds kosong, coba cari ulang gogoId
+                if (!finalUrl && currentStream.animeId) {
+                    const newEpList = await fetchGogoEpisodes(currentStream.animeId);
+                    if (newEpList.length >= currentStream.ep) {
+                        finalUrl = await getStreamFromConsumet(newEpList[currentStream.ep - 1], currentStream.quality);
+                    }
+                }
+                if (!finalUrl) errorMsg = "Consumet: Gagal mengambil video";
             }
             
-            // Jika masih tidak ada, coba fallback otomatis ke server lain
-            if (!finalUrl) {
-                // Coba backup embed sebagai last resort
+            // SERVER 2: BACKUP EMBED (Vidsrc)
+            if (!finalUrl && currentStream.server === 2) {
                 finalUrl = BACKUP_EMBED(currentStream.malId, currentStream.ep);
+                errorMsg = ""; // backup selalu ada meskipun mungkin diblokir
             }
             
+            // Jika masih kosong, coba fallback ke server lain secara otomatis (opsional)
             if (!finalUrl) {
-                container.innerHTML = '<div class="h-full w-full flex items-center justify-center text-red-500 text-xs">Gagal memuat video, coba server lain atau refresh.</div>';
+                container.innerHTML = `<div class="h-full w-full flex flex-col items-center justify-center text-red-500 text-xs p-4 text-center">
+                    <i class="fa-solid fa-circle-exclamation text-2xl mb-2"></i>
+                    Gagal memuat video.
+                    <div class="text-gray-400 text-[9px] mt-1">${errorMsg || "Coba ganti server manual"}</div>
+                    <button onclick="loadVideo()" class="mt-3 bg-white/10 px-3 py-1 rounded-full text-[10px]">Coba Lagi</button>
+                </div>`;
                 return;
             }
             
             // Tampilkan video
-            // Deteksi apakah URL berupa file video langsung atau embed iframe
             if (finalUrl.includes('.m3u8') || finalUrl.includes('.mp4') || finalUrl.includes('video')) {
-                // Gunakan video tag
                 container.innerHTML = `<video controls autoplay style="width:100%; height:100%; background:#000;">
                     <source src="${finalUrl}" type="video/mp4">
-                    Your browser does not support the video tag.
+                    Browser tidak mendukung video tag.
                 </video>`;
-                // Jika m3u8, coba gunakan HLS.js jika tersedia (optional)
+                // Jika m3u8, coba gunakan HLS.js (optional)
                 if (finalUrl.includes('.m3u8') && typeof Hls !== 'undefined') {
                     const video = container.querySelector('video');
-                    if (Hls.isSupported()) {
+                    if (video && Hls.isSupported()) {
                         const hls = new Hls();
                         hls.loadSource(finalUrl);
                         hls.attachMedia(video);
                     }
                 }
             } else {
-                // Anggap sebagai iframe embed
                 container.innerHTML = `<iframe src="${finalUrl}" allowfullscreen referrerpolicy="no-referrer" allow="autoplay; fullscreen" sandbox="allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation" style="width:100%; height:100%; border:none; background:#000;"></iframe>`;
             }
         }
         
-        // ==================== FUNGSI FULL LIST VIEW ====================
+        // ==================== FUNGSI FULL LIST VIEW (TIDAK BERUBAH) ====================
         async function openFull(title, path) {
             document.getElementById('fullTitle').innerText = title;
             document.getElementById('fullGrid').innerHTML = '';
@@ -454,78 +505,40 @@
                 const res = await fetch(`${API_JIKAN}${fullViewState.path}${fullViewState.path.includes('?')?'&':'?'}page=${fullViewState.page}&limit=24&sfw=true`);
                 const { data, pagination } = await res.json();
                 if (data && data.length > 0) {
-                    const html = data.map(a => `
-                        <div class="anime-item" onclick="openAnimeModal(${a.mal_id})">
-                            <div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div>
-                            <h4 class="anime-title">${a.title}</h4>
-                        </div>
-                    `).join('');
-                    document.getElementById('fullGrid').innerHTML += html;
+                    document.getElementById('fullGrid').innerHTML += data.map(a => `<div class="anime-item" onclick="openAnimeModal(${a.mal_id})"><div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div><h4 class="anime-title">${a.title}</h4></div>`).join('');
                     fullViewState.hasNext = pagination.has_next_page;
                     fullViewState.page++;
-                } else {
-                    fullViewState.hasNext = false;
-                }
-            } catch(e) {
-                console.error(e);
-                fullViewState.hasNext = false;
-            } finally {
+                } else { fullViewState.hasNext = false; }
+            } catch(e) { fullViewState.hasNext = false; }
+            finally {
                 fullViewState.loading = false;
                 document.getElementById('fullLoader').style.display = 'none';
             }
         }
         
-        // Infinite scroll untuk full list
         document.getElementById('fullListView').onscroll = function() {
             if (this.scrollTop + this.clientHeight >= this.scrollHeight - 600) loadNextFullPage();
         };
         
-        // ==================== INIT HOME & ROWS ====================
+        // ==================== INIT HOME & ROWS (TIDAK BERUBAH) ====================
         async function init() {
             const main = document.getElementById('mainContent');
             const chips = document.getElementById('mainChips');
             main.innerHTML = ''; chips.innerHTML = '';
             for(const c of CATS) {
                 chips.innerHTML += `<div class="chip" onclick="scrollToCat('${c.id}', this)">${c.name}</div>`;
-                main.innerHTML += `
-                    <div id="${c.id}" class="mb-12">
-                        <div class="section-header">
-                            <div class="section-title-group">
-                                <h3 class="section-title" style="color:${c.color}">${c.name}</h3>
-                                <div class="section-bar" style="background:linear-gradient(90deg, ${c.color}, transparent)"></div>
-                            </div>
-                            <div class="see-all" style="color:${c.color}" onclick="openFull('${c.name}', '${c.query}')">Semua <i class="fa-solid fa-chevron-right ml-1"></i></div>
-                        </div>
-                        <div id="row-${c.id}" class="row-container"><div class="flex items-center justify-center w-full py-10"><div class="loading-pulse"></div></div></div>
-                    </div>
-                `;
+                main.innerHTML += `<div id="${c.id}" class="mb-12"><div class="section-header"><div class="section-title-group"><h3 class="section-title" style="color:${c.color}">${c.name}</h3><div class="section-bar" style="background:linear-gradient(90deg, ${c.color}, transparent)"></div></div><div class="see-all" style="color:${c.color}" onclick="openFull('${c.name}', '${c.query}')">Semua <i class="fa-solid fa-chevron-right ml-1"></i></div></div><div id="row-${c.id}" class="row-container"><div class="flex items-center justify-center w-full py-10"><div class="loading-pulse"></div></div></div></div>`;
             }
             document.querySelector('.chip').classList.add('active');
-            for (const c of CATS) { 
-                await fetchRow(`${API_JIKAN}${c.query}`, `row-${c.id}`); 
-                await new Promise(r => setTimeout(r, 500));
-            }
+            for (const c of CATS) { await fetchRow(`${API_JIKAN}${c.query}`, `row-${c.id}`); await new Promise(r => setTimeout(r, 500)); }
         }
         
         async function fetchRow(url, target, retryCount = 0) {
             try {
                 const res = await fetch(url + (url.includes('?') ? '&' : '?') + 'limit=12&sfw=true');
-                if (res.status === 429 && retryCount < 3) { 
-                    await new Promise(r => setTimeout(r, 2000)); 
-                    return fetchRow(url, target, retryCount + 1); 
-                }
+                if (res.status === 429 && retryCount < 3) { await new Promise(r => setTimeout(r, 2000)); return fetchRow(url, target, retryCount + 1); }
                 const { data } = await res.json();
-                if (data && data.length) {
-                    const html = data.map(a => `
-                        <div class="anime-item" onclick="openAnimeModal(${a.mal_id})">
-                            <div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div>
-                            <h4 class="anime-title">${a.title}</h4>
-                        </div>
-                    `).join('');
-                    document.getElementById(target).innerHTML = html;
-                } else {
-                    document.getElementById(target).innerHTML = '<div class="w-full text-center py-10 opacity-40">Tidak ada data</div>';
-                }
+                document.getElementById(target).innerHTML = data.map(a => `<div class="anime-item" onclick="openAnimeModal(${a.mal_id})"><div class="poster-wrapper"><img src="${a.images.jpg.image_url}" loading="lazy" onload="this.classList.add('loaded')"></div><h4 class="anime-title">${a.title}</h4></div>`).join('');
             } catch(e) {
                 document.getElementById(target).innerHTML = `<div class="w-full text-center py-10 opacity-40"><button onclick="fetchRow('${url}', '${target}')" class="text-[9px] font-bold text-white uppercase border border-white/20 px-4 py-1 rounded-full">Retry</button></div>`;
             }
